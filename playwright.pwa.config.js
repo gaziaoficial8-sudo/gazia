@@ -1,0 +1,2 @@
+import {defineConfig} from '@playwright/test';
+export default defineConfig({testDir:'./tests-pwa',outputDir:'test-results-pwa',workers:1,use:{baseURL:'http://127.0.0.1:4173',...(process.platform==='win32'?{channel:'chrome'}:{}),launchOptions:process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{},viewport:{width:390,height:844},isMobile:true,hasTouch:true},webServer:{command:'npm run preview -- --port 4173 --strictPort',url:'http://127.0.0.1:4173',reuseExistingServer:!process.env.CI}});

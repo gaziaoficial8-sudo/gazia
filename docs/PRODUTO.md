@@ -1,4 +1,6 @@
-# Plano inicial
+# Plano inicial e evolução do piloto
+
+> Atualização v0.2: a base mobile/PWA, CSV com prévia, prioridades, sequência manual, motivos, correções, histórico e backup local foram implementados. O clima fictício foi retirado. Consulte [README](../README.md), [comercialização](COMERCIALIZACAO.md) e [validação](VALIDACAO.md) para o estado atual. As decisões abaixo registram a intenção original; geocodificação, trajetos, otimização real e nuvem continuam pendentes.
 
 ## Objetivo
 
