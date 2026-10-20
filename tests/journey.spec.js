@@ -72,3 +72,32 @@ test('embedded map and automatic progression retain failures and finish the jour
  await expect(page.getByRole('heading',{name:'Jornada concluída. Bom descanso!'})).toBeVisible();
  await expect(page.getByText('5 de 5 entregas concluídas.',{exact:false})).toBeVisible();
 });
+
+test('map sends actual origin and applies explicit referrer policy',async({page})=>{
+ const requests=[];
+ const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl6N9sAAAAASUVORK5CYII=','base64');
+ await page.route('**/tile.openstreetmap.org/**',async route=>{
+  requests.push(route.request());
+  await route.fulfill({status:200,contentType:'image/png',body:png});
+ });
+ await page.goto('/');
+ await expect.poll(()=>requests.length).toBeGreaterThan(0);
+ await expect(page.locator('.leaflet-tile').first()).toHaveAttribute('referrerpolicy','strict-origin-when-cross-origin');
+ expect(requests[0].headers().referer).toBe('http://127.0.0.1:5173/');
+ await expect(page.locator('.leaflet-tile-loaded').first()).toBeVisible();
+ await expect(page.locator('#map-network')).toBeHidden();
+});
+
+test('403 removes rejected imagery and stops automatic retries across deliveries',async({page})=>{
+ let calls=0;
+ await page.route('**/tile.openstreetmap.org/**',async route=>{calls++;await route.fulfill({status:403,contentType:'text/plain',body:'Access blocked'});});
+ await page.goto('/');
+ await expect(page.locator('#map-network')).toBeVisible();
+ await expect(page.locator('.leaflet-tile')).toHaveCount(0);
+ const before=calls;
+ await page.getByRole('button',{name:'Minha rota',exact:true}).click();
+ await page.getByRole('button',{name:'Marcar entregue'}).click();
+ await expect(page.locator('.current-stop h2')).toHaveText('Marina Oliveira');
+ await expect(page.locator('#map-network')).toBeVisible();
+ expect(calls).toBe(before);
+});

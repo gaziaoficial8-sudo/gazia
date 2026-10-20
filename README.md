@@ -37,7 +37,7 @@ O CSV utiliza ponto e vírgula, sem delimitadores ou quebras de linha dentro dos
 - Mapa interno interativo com Leaflet e cartografia OpenStreetMap. As cinco posições são fictícias, sem relação validada com os endereços de exemplo. Novos endereços não recebem coordenadas automaticamente. Não há geocodificação, cálculo de trajeto, distância, otimização ou orientação por GPS.
 - Clima é fictício; não há consulta de trânsito nem confirmação automática de horários comerciais.
 - Não é necessário abrir um aplicativo externo para acompanhar o fluxo. A versão atual ainda não oferece navegação curva a curva.
-- Cartografia depende de conexão com `tile.openstreetmap.org`. Em caso de falha, o aplicativo mostra um aviso e mantém lista e registros utilizáveis. A atribuição OpenStreetMap permanece visível. Antes de produção, revisar política de uso, capacidade, privacidade e custos de um provedor de mapas; o serviço público não tem garantia de disponibilidade.
+- Cartografia depende de conexão com `tile.openstreetmap.org`. As imagens enviam a origem real da página por `strict-origin-when-cross-origin`, sem falsificar identificação. Em caso de falha ou bloqueio, o aplicativo remove a camada, mostra um aviso e interrompe novas consultas durante a sessão. A lista e os registros continuam utilizáveis. Recarregar a página permite uma nova tentativa; o bloqueio do provedor pode continuar. A atribuição OpenStreetMap permanece visível. Antes de produção, revisar política de uso, capacidade, privacidade e custos de um provedor de mapas; o serviço público não tem garantia de disponibilidade.
 - Dados ficam somente no armazenamento deste navegador. Limpar os dados do site apaga a jornada. Não há conta, servidor, sincronização ou compartilhamento entre dispositivos.
 - Use apenas dados fictícios. O produto ainda não está preparado para operação com dados pessoais reais.
 - Responsivo para web; ainda não é um PWA instalável, não possui service worker e o recarregamento offline não está implementado.
@@ -48,3 +48,7 @@ O CSV utiliza ponto e vírgula, sem delimitadores ou quebras de linha dentro dos
 Validar o protótipo com motoristas, escolher o nome após consulta de disponibilidade, avaliar provedores de mapas e seus custos, implementar endereços reais e otimização com janelas de recebimento, depois persistência segura e funcionamento offline.
 
 Veja [o planejamento](docs/PRODUTO.md) e [o registro da pesquisa de nomes](docs/NOMES.md).
+
+## Mapa bloqueado (403)
+
+O servidor de imagens pode recusar o acesso independentemente do funcionamento do aplicativo. Foi observado um bloqueio no Codespaces. A política de referência foi explicitada, mas a liberação no Codespaces ainda precisa ser confirmada no navegador do usuário. Os testes automatizados verificam a configuração e o comportamento de falha com respostas controladas; não demonstram acesso real ao provedor. Não altere a origem para se passar por outro site nem tente contornar bloqueios. Se persistir, será necessário um serviço de mapas que autorize esse uso ou hospedagem própria, com avaliação de regras e custos.
