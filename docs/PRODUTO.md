@@ -20,3 +20,9 @@ Visão geral → Entregas (manual/CSV) → Conferência → Rota demonstrativa �
 ## Validação
 
 Convidar de 3 a 5 motoristas para testar o protótipo com dados fictícios. Observar facilidade de inserir entregas, corrigir horários e registrar tentativas. Antes de operação real, validar geocodificação, cálculo de rota, restrições, proteção de dados e recuperação de falhas. Medir tempo de planejamento e entregas frustradas por horário em um piloto posterior com autorização.
+
+## Fluxo de execução atualizado
+
+O motorista acompanha um mapa dentro do aplicativo. “Marcar entregue” e “Não consegui entregar” registram o resultado e avançam para a próxima pendente na sequência, sem revisitar automaticamente tentativas frustradas. No fim, abre o resumo. Uma falha pode ser recolocada como pendente por “Tentar novamente”. O destino selecionado e resultados persistem neste navegador.
+
+O protótipo usa mapa real de ruas, mas pontos fictícios e nenhum trajeto calculado. Navegação interna por GPS, instruções de conversão e recálculo após desvio fazem parte do produto pretendido e exigem implementação e avaliação de provedor.

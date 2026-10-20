@@ -40,3 +40,35 @@ test('CSV import validates input and escapes markup',async({page})=>{
  await expect(page.locator('tbody img')).toHaveCount(0);
  await expect(page.getByText('<img src=x onerror=alert(1)>',{exact:true})).toBeVisible();
 });
+
+test('embedded map and automatic progression retain failures and finish the journey',async({page})=>{
+ await page.route('**/tile.openstreetmap.org/**',route=>route.abort());
+ await page.goto('/');
+ await page.getByRole('button',{name:'Minha rota',exact:true}).click();
+ await expect(page.locator('#journey-map.leaflet-container')).toBeVisible();
+ await expect(page.locator('#map-network')).toBeVisible();
+ await expect(page.getByRole('link',{name:'Abrir navegação'})).toHaveCount(0);
+ await expect(page.locator('.current-stop h2')).toHaveText('Papelaria Horizonte');
+ await page.getByRole('button',{name:'Marcar entregue'}).click();
+ await expect(page.locator('.current-stop h2')).toHaveText('Marina Oliveira');
+ await page.getByRole('button',{name:'Não consegui entregar',exact:true}).click();
+ await expect(page.locator('.current-stop h2')).toHaveText('Ateliê dos Calçados');
+ await expect(page.locator('.stop').filter({hasText:'Marina Oliveira'})).toContainText('Sem sucesso');
+ await page.reload();
+ await page.getByRole('button',{name:'Minha rota',exact:true}).click();
+ await expect(page.locator('.current-stop h2')).toHaveText('Ateliê dos Calçados');
+ for(const name of ['Ateliê dos Calçados','Rafael Santos','Café da Esquina']){
+  await expect(page.locator('.current-stop h2')).toHaveText(name);
+  await page.getByRole('button',{name:'Marcar entregue'}).click();
+ }
+ await expect(page.getByRole('heading',{name:'Todas as paradas foram visitadas.'})).toBeVisible();
+ await expect(page.getByText('4 de 5 entregas concluídas.',{exact:false})).toBeVisible();
+ await expect(page.locator('.history-row').filter({hasText:'Marina Oliveira'})).toContainText('Tentativa sem sucesso');
+ await page.getByRole('button',{name:'Voltar à rota'}).click();
+ await page.locator('.stop').filter({hasText:'Marina Oliveira'}).click();
+ await page.getByRole('button',{name:'Tentar novamente',exact:true}).click();
+ await expect(page.locator('.current-stop h2')).toHaveText('Marina Oliveira');
+ await page.getByRole('button',{name:'Marcar entregue'}).click();
+ await expect(page.getByRole('heading',{name:'Jornada concluída. Bom descanso!'})).toBeVisible();
+ await expect(page.getByText('5 de 5 entregas concluídas.',{exact:false})).toBeVisible();
+});
