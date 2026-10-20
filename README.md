@@ -2,6 +2,8 @@
 
 Assistente de entregas para Franca e região. Nome provisório, sem marca ou domínio confirmado. Evolução da base JavaScript/Vite/Leaflet existente, sem migração de framework ou contratação de serviços.
 
+**Prévia privada HTTPS:** [abrir Girovia](https://girovia-piloto.softcomet65.chatgpt.site). Se solicitado, entre na mesma conta do ChatGPT que publicou o Site. Consulte [acesso e publicação](docs/PUBLICACAO.md). Instalação física Android/iPhone ainda não foi verificada.
+
 ## Abrir no notebook
 
 Node.js 22.12+ e npm. Validado com Node 24.21.0 e Chrome instalado no Windows. No PowerShell, use `npm.cmd` para evitar a restrição de execução do `npm.ps1`:
@@ -17,7 +19,7 @@ Abra http://127.0.0.1:4173. Mantenha o terminal do servidor aberto. `npm run dev
 
 ## Usar e instalar no celular
 
-O build em `dist` deve ser publicado em uma hospedagem **HTTPS**, na raiz do domínio, com fallback para `index.html`. `sw.js` precisa ser servido como JavaScript e com revalidação (`Cache-Control: no-cache`); não encaminhar pedidos de arquivos inexistentes para HTML. Assets com hash podem receber cache longo. Nenhuma hospedagem foi contratada nem publicação realizada nesta entrega.
+O build em `dist` deve ser publicado em uma hospedagem **HTTPS**, na raiz do domínio, com fallback para `index.html`. `sw.js` precisa ser servido como JavaScript e com revalidação (`Cache-Control: no-cache`); não encaminhar pedidos de arquivos inexistentes para HTML. Assets com hash podem receber cache longo. A prévia acima foi publicada privadamente pelo recurso Sites; nenhuma hospedagem externa paga foi contratada.
 
 1. Abra o endereço HTTPS no celular, conectado à internet.
 2. Espere aparecer “Interface pronta para abrir sem internet”.
@@ -103,4 +105,4 @@ Windows: usa Chrome instalado. Em Linux/macOS, instale Chromium do Playwright (`
 
 Validação de referência: Chrome desktop no Windows e emulação touch de 360×844, 390×844 e 430×844; desktop 1440×1060. Fluxos cobrem cadastro/edição, validação, CSV/duplicatas/escape de HTML, resultados mistos, seleção e persistência, retentativa/correção, toque repetido, falha de armazenamento, sequência/prioridade, exclusão confirmada, separação de modos, arquivo/exportação, backup/restauração, migração/dados corrompidos, mapa 403, política de referência, localização negada/baixa precisão e larguras sem rolagem horizontal. Testes de produção exercitam service worker real, recarregamento offline, registro offline e atualização aguardando o usuário com jornada preservada.
 
-**Não foram testados aparelhos físicos, Safari/iOS, instalação manual em celular ou ambiente publicado.** Consulte [a validação](docs/VALIDACAO.md), [o plano comercial](docs/COMERCIALIZACAO.md) e [a implementação](docs/IMPLEMENTACAO.md).
+**Não foram testados aparelhos físicos, Safari/iOS ou instalação manual em celular.** A publicação privada foi confirmada pelo Sites; os testes de comportamento ocorreram localmente. Consulte [a validação](docs/VALIDACAO.md), [o plano comercial](docs/COMERCIALIZACAO.md) e [a implementação](docs/IMPLEMENTACAO.md).
