@@ -7,23 +7,21 @@ async function upload(p,body){await p.locator('#csv-file').setInputFiles({name:'
 const confirm=p=>p.getByRole('button',{name:'Confirmar',exact:true}).click();
 test.beforeEach(async({page})=>page.route('**/tile.openstreetmap.org/**',r=>r.abort()));
 
-test('registration, validation, review and persisted progress',async({page},info)=>{
+test('registration without type or hours, editing and persisted progress',async({page},info)=>{
  const errors=[];page.on('pageerror',e=>errors.push(e.message));await open(page);await page.screenshot({path:info.outputPath('home.png'),fullPage:true});
- await page.getByRole('button',{name:'Preparar minhas entregas'}).click();await expect(page.locator('.delivery-card')).toHaveCount(5);
+ await nav(page,'Entregas').click();await expect(page.locator('.delivery-card')).toHaveCount(5);
  await page.getByRole('button',{name:'Nova entrega'}).click();
- await page.getByLabel('Nome do destino').fill('Loja de teste');await page.getByLabel('Endereço em Franca').fill('Rua Exemplo, 100');await page.getByLabel('Pacote',{exact:true}).fill('B01');
- await page.locator('[name=from]').fill('18:00');await page.locator('[name=until]').fill('09:00');await page.getByRole('button',{name:'Adicionar entrega'}).click();
- await expect(page.locator('#form-error')).toContainText('horário final');await expect(page.getByLabel('Nome do destino')).toHaveValue('Loja de teste');
- await page.locator('[name=from]').fill('09:00');await page.locator('[name=until]').fill('18:00');await page.getByRole('button',{name:'Adicionar entrega'}).click();await expect(page.locator('.delivery-card')).toHaveCount(6);
- await page.getByRole('button',{name:'Editar Loja de teste',exact:true}).click();await page.getByLabel('Endereço em Franca').fill('Rua Corrigida, 200');await page.getByRole('button',{name:'Salvar entrega',exact:true}).click();await expect(page.locator('.delivery-card').filter({hasText:'Loja de teste'})).toContainText('Rua Corrigida, 200');
- await page.getByRole('button',{name:'Conferir entregas'}).click();await page.getByLabel('Horário de Loja de teste').fill('25:00–26:00');await page.getByRole('button',{name:'Iniciar jornada'}).click();await expect(page.locator('#window-error')).toContainText('horário válido');
- await page.getByLabel('Horário de Loja de teste').fill('09:00–18:00');await page.getByRole('button',{name:'Iniciar jornada'}).click();await page.getByRole('button',{name:'Marcar entregue'}).click();await page.reload();await expect(page.locator('.current-stop h2')).toHaveText('Marina Oliveira');
+ await expect(page.locator('[name=type],[name=from],[name=until]')).toHaveCount(0);
+ await page.getByLabel('Nome do destino').fill('Loja de teste');await page.getByLabel('Endereço completo').fill('Rua Exemplo, 100');await page.getByLabel('Pacote',{exact:true}).fill('A01');await page.getByRole('button',{name:'Adicionar entrega'}).click();await expect(page.locator('#form-error')).toContainText('duplicata');await expect(page.getByLabel('Nome do destino')).toHaveValue('Loja de teste');
+ await page.getByLabel('Pacote',{exact:true}).fill('B01');await page.getByRole('button',{name:'Adicionar entrega'}).click();await expect(page.locator('.delivery-card')).toHaveCount(6);
+ await page.getByRole('button',{name:'Editar Loja de teste',exact:true}).click();await page.getByLabel('Endereço completo').fill('Rua Corrigida, 200');await page.getByRole('button',{name:'Salvar entrega',exact:true}).click();await expect(page.locator('.delivery-card').filter({hasText:'Loja de teste'})).toContainText('Rua Corrigida, 200');
+ await page.getByRole('button',{name:'Conferir endereços'}).click();await page.getByRole('button',{name:'Usar sequência manual'}).click();await page.getByRole('button',{name:'Marcar entregue'}).click();await page.reload();await expect(page.locator('.current-stop h2')).toHaveText('Marina Oliveira');
  await nav(page,'Resumo').click();await expect(page.getByText('1 de 6 entregas concluídas.',{exact:false})).toBeVisible();expect(errors).toEqual([]);
 });
 
 test('CSV preview validates rows, flags duplicates and escapes markup',async({page})=>{
- await open(page);await nav(page,'Entregas').click();await upload(page,'nome,endereco\nfoo,bar');await expect(page.locator('.toast')).toContainText('Use o modelo CSV');
- await upload(page,csv+'Loja;Rua Teste;Comércio;19:00–09:00;B01');await expect(page.getByRole('dialog')).toContainText('Linha 2');await expect(page.getByRole('button',{name:'Confirmar importação'})).toBeDisabled();await page.getByRole('button',{name:'Fechar',exact:true}).click();
+ await open(page);await nav(page,'Entregas').click();await upload(page,'nome,codigo\nfoo,bar');await expect(page.locator('.toast')).toContainText('Use o modelo CSV');
+ await upload(page,'nome;endereco;pacote\nLoja;;B01');await expect(page.getByRole('dialog')).toContainText('Linha 2');await expect(page.getByRole('button',{name:'Confirmar importação'})).toBeDisabled();await page.getByRole('button',{name:'Fechar',exact:true}).click();
  await upload(page,csv+'<img src=x onerror=alert(1)>;Rua Teste 20;Comércio;09:00–17:00;B01\nDuplicata;Rua D;Residência;09:00–18:00;A01');await expect(page.locator('.delivery-card')).toHaveCount(5);await expect(page.getByRole('dialog')).toContainText('Possível duplicata');await page.getByRole('button',{name:'Confirmar importação'}).click();await expect(page.locator('.delivery-card')).toHaveCount(6);await expect(page.locator('.delivery-card img')).toHaveCount(0);await expect(page.getByText('<img src=x onerror=alert(1)>',{exact:true})).toBeVisible();
 });
 
@@ -42,9 +40,8 @@ test('storage failure rolls back and keeps the current stop',async({page})=>{
  await open(page);await nav(page,'Jornada').click();await page.evaluate(()=>{Storage.prototype.setItem=()=>{throw new DOMException('Quota exceeded','QuotaExceededError');};});await page.getByRole('button',{name:'Marcar entregue'}).click();await expect(page.locator('.toast')).toContainText('Nenhuma alteração foi confirmada');await expect(page.locator('.current-stop h2')).toHaveText('Papelaria Horizonte');expect(await page.evaluate(k=>JSON.parse(localStorage.getItem(k)).demo.deliveries[0].status,key)).toBe('pending');
 });
 
-test('manual order, priority, confirmation and mode separation',async({page})=>{
+test('manual order, confirmation and mode separation',async({page})=>{
  await open(page);await nav(page,'Entregas').click();await page.getByRole('button',{name:'Subir Marina Oliveira',exact:true}).click();await expect(page.locator('.delivery-card h3').first()).toHaveText('Marina Oliveira');
- await page.locator('.delivery-card').filter({hasText:'Café da Esquina'}).getByLabel('Prioridade').selectOption('high');await page.getByRole('button',{name:'Prioridades primeiro'}).click();await expect(page.locator('.delivery-card h3').first()).toHaveText('Café da Esquina');
  await page.getByRole('button',{name:'Excluir Café da Esquina',exact:true}).click();await page.getByRole('button',{name:'Cancelar',exact:true}).click();await expect(page.locator('.delivery-card')).toHaveCount(5);
  await page.getByRole('button',{name:'Excluir Café da Esquina',exact:true}).click();await confirm(page);await expect(page.locator('.delivery-card')).toHaveCount(4);
  await page.getByRole('button',{name:'Usar minha jornada',exact:true}).click();await nav(page,'Entregas').click();await expect(page.locator('.delivery-card')).toHaveCount(0);await upload(page,csv+'Loja própria;Rua Teste;Comércio;09:00–17:00;X01');await page.getByRole('button',{name:'Confirmar importação'}).click();

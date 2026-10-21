@@ -16,3 +16,4 @@ const initial = [
 ];
 start(initial);
 import './pilot.css';
+import './intake.css';

@@ -4,9 +4,11 @@ async function files(dir){const entries=await readdir(dir,{withFileTypes:true});
 const assets=(await files('dist')).filter(f=>!f.endsWith('/sw.js')).sort();
 const hash=createHash('sha256');for(const f of assets)hash.update(await readFile(f));
 const version=hash.digest('hex').slice(0,16);
-const urls=assets.map(f=>'/'+f.slice(5));
+const urls=assets.filter(f=>!f.startsWith('dist/ocr/')).map(f=>'/'+f.slice(5));
+const optional=assets.filter(f=>f.startsWith('dist/ocr/')).map(f=>'/'+f.slice(5));
 const worker=`const CACHE='girovia-shell-${version}';
 const SHELL=${JSON.stringify(urls)};
+const OCR=${JSON.stringify(optional)};
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(SHELL))));
 self.addEventListener('message',event=>{if(event.data?.type==='ACTIVATE_UPDATE')self.skipWaiting();});
 self.addEventListener('activate',event=>event.waitUntil((async()=>{
@@ -24,6 +26,7 @@ self.addEventListener('fetch',event=>{
   // Serve matching HTML and hashed assets from one release. An update waits for consent.
   event.respondWith(caches.open(CACHE).then(cache=>cache.match('/index.html')).then(cached=>cached||fetch(event.request)));return;
  }
+ if(OCR.includes(url.pathname)){event.respondWith(caches.open(CACHE).then(async cache=>{const found=await cache.match(url.pathname);if(found)return found;const response=await fetch(event.request);if(response.ok)await cache.put(url.pathname,response.clone());return response;}));return;}
  if(SHELL.includes(url.pathname))event.respondWith(caches.open(CACHE).then(cache=>cache.match(url.pathname)).then(cached=>cached||fetch(event.request)));
 });
 `;

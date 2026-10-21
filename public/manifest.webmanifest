@@ -1,5 +1,5 @@
 {
- "id":"/", "name":"Girovia · Assistente de entregas", "short_name":"Girovia",
+ "id":"/", "name":"Entreguei · Assistente de entregas", "short_name":"Entreguei",
  "description":"Organize paradas e registre sua jornada de entregas.",
  "lang":"pt-BR", "start_url":"/", "scope":"/", "display":"standalone",
  "background_color":"#f7f8f2", "theme_color":"#143e36",

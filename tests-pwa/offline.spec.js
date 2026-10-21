@@ -4,11 +4,16 @@ const key='girovia-pilot-v2';
 async function ready(page){await page.goto('/');await page.getByRole('button',{name:'Entendi, começar'}).click();await expect(page.locator('.offline-ready')).toContainText('Interface pronta');await page.evaluate(()=>navigator.serviceWorker.ready);await page.reload();}
 const nav=(page,name)=>page.getByRole('navigation').getByRole('button',{name,exact:true});
 test('production manifest and offline reload preserve registrations',async({page,context})=>{
- await ready(page);const manifest=await (await page.request.get('/manifest.webmanifest')).json();expect(manifest.display).toBe('standalone');expect(manifest.icons.some(i=>i.sizes==='512x512'&&i.purpose==='maskable')).toBe(true);
+ await ready(page);const manifest=await (await page.request.get('/manifest.webmanifest')).json();expect(manifest.short_name).toBe('Entreguei');expect(manifest.display).toBe('standalone');expect(manifest.icons.some(i=>i.sizes==='512x512'&&i.purpose==='maskable')).toBe(true);
  await nav(page,'Jornada').click();await page.getByRole('button',{name:'Marcar entregue'}).click();await context.setOffline(true);await page.reload();await expect(page.locator('.connection')).toContainText('Sem conexão');await expect(page.locator('.current-stop h2')).toHaveText('Marina Oliveira');
  await page.getByRole('button',{name:'Não consegui entregar',exact:true}).click();await page.getByRole('button',{name:'Salvar tentativa e avançar'}).click();await page.reload();await expect(page.locator('.current-stop h2')).toHaveText('Ateliê dos Calçados');
  const saved=await page.evaluate(k=>JSON.parse(localStorage.getItem(k)),key);expect(saved.demo.deliveries[0].status).toBe('done');expect(saved.demo.deliveries[1].status).toBe('failed');
  const urls=await page.evaluate(async()=>{const cache=await caches.open((await caches.keys()).find(k=>k.startsWith('girovia-shell-')));return (await cache.keys()).map(r=>r.url);});expect(urls.every(url=>url.startsWith('http://127.0.0.1:4173/'))).toBe(true);expect(urls.some(url=>url.includes('tile.openstreetmap'))).toBe(false);
+});
+
+test('OCR assets loaded online remain available for a new offline reading',async({page,context})=>{
+ test.setTimeout(120000);await ready(page);await page.getByRole('button',{name:'Não tenho lista'}).click();await page.locator('#label-photo').setInputFiles('tests/fixtures/etiqueta.png');await expect(page.locator('#label-form')).toBeVisible({timeout:90000});await page.getByRole('button',{name:'Concluir leitura',exact:true}).click();
+ await context.setOffline(true);await page.reload();await page.getByRole('button',{name:'Não tenho lista'}).click();await page.locator('#label-photo').setInputFiles('tests/fixtures/etiqueta.png');await expect(page.locator('#label-form')).toBeVisible({timeout:90000});await expect(page.getByLabel('Endereço completo')).toHaveValue(/Rua das Flores/i);
 });
 
 test('waiting service worker updates only on request, keeping form and journey',async({page})=>{

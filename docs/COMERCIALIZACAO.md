@@ -1,5 +1,15 @@
 # Girovia: preparação para comercialização
 
+## Atualização v0.3 · Entreguei (provisório)
+
+O posicionamento agora é entrada rápida de entregas: lista da empresa ou, se não houver lista, leitura das etiquetas. Tipo de imóvel e recebimento foram removidos do fluxo por decisão do proprietário. Não considerar a ênfase histórica em horários abaixo como requisito atual.
+
+A leitura de texto é local, em português, com conferência obrigatória e detecção de pacote repetido. A organização real foi integrada ao Geoapify, mas não está ativada na prévia sem chave. Antes de oferecer esse recurso comercialmente: configurar conta/plano, restringir chave pública à origem, validar custos por jornada e testar endereços e rotas reais. Não se escolheu um servidor público de demonstração como infraestrutura comercial.
+
+Validar etiquetas efetivamente usadas pelos motoristas: qualidade da câmera, disposição de remetente/destinatário, códigos longos, endereços incompletos e tempo de conferência. O teste automatizado com etiqueta fictícia não comprova leitura de todas as transportadoras. Validar arquivos reais de listas e só depois ampliar formatos além de CSV/colar.
+
+Entreguei continua sugestão de nome: conferir disponibilidade antes de investir em marca. O link privado anterior foi preservado.
+
 ## Posicionamento a validar
 
 Assistente de jornada para motoristas autônomos de Franca e região: reunir paradas, conferir recebimento e registrar cada resultado. Os diferenciais propostos são clareza de horários, facilidade de corrigir erros e continuidade dos registros sem internet. São hipóteses de valor; ainda não há evidência de redução de quilômetros, combustível ou entregas frustradas.

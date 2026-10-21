@@ -1,12 +1,37 @@
-# Girovia · piloto mobile v0.2
+# Entreguei · piloto mobile v0.3
 
-Assistente de entregas para Franca e região. Nome provisório, sem marca ou domínio confirmado. Evolução da base JavaScript/Vite/Leaflet existente, sem migração de framework ou contratação de serviços.
+Nome provisório escolhido para a evolução do Girovia. Não houve confirmação de disponibilidade de marca ou domínio. Mantidos JavaScript, Vite, Leaflet e o núcleo de jornada existente.
 
-**Prévia privada HTTPS:** [abrir Girovia](https://girovia-piloto.softcomet65.chatgpt.site). Se solicitado, entre na mesma conta do ChatGPT que publicou o Site. Consulte [acesso e publicação](docs/PUBLICACAO.md). Instalação física Android/iPhone ainda não foi verificada.
+Prévia privada: https://girovia-piloto.softcomet65.chatgpt.site — a URL anterior foi preservada. Se solicitado, entre na mesma conta do ChatGPT proprietária do Site. Não foi aberto o acesso a outros motoristas.
+
+## Fluxo principal
+
+1. **Tenho uma lista:** importar CSV da empresa ou colar uma tabela/lista de endereços.
+2. **Não tenho lista:** fotografar as etiquetas, ler o texto localmente e confirmar os dados de cada pacote antes de adicionar. As duas entradas alimentam a mesma jornada.
+3. Conferir os endereços e a saída; escolher terminar na última entrega ou voltar à saída.
+4. Organizar a rota com o provedor configurado, ou usar explicitamente a sequência manual.
+5. Registrar entregas e tentativas, corrigir resultados e consultar o resumo.
+
+Tipo de imóvel, recebimento e alertas de horário foram retirados do fluxo. Endereços comerciais são destinos normais. Campos antigos continuam preservados nos dados e backups, mas não interferem na organização.
+
+## O que está pronto
+
+- Entrada por CSV, tabela colada ou endereço completo por linha, com prévia e erros antes de importar.
+- Cadastro e edição manuais simplificados: endereço e identificação do pacote; nome opcional.
+- Leitura **real de texto** de fotos com Tesseract.js em português, executada em Web Worker no próprio aparelho. Uma etiqueta por vez, contador, conferência e continuidade para a próxima.
+- Avisos para leitura incerta/bloco de destinatário não identificado; foto ruim pode exigir nova leitura ou preenchimento manual.
+- Detecção de código de pacote repetido; pacotes diferentes no mesmo endereço são permitidos.
+- Agrupamento pelo endereço completo (incluindo complemento), preservando cada pacote. É possível registrar os pendentes de um endereço juntos ou individualmente.
+- Confirmação explícita de candidatos de endereço, saída/retorno e integração de planejamento e traçado de ruas com Geoapify.
+- Jornada offline, motivos, avanço, retentativa, correção, histórico, CSV de resultados e backup JSON restaurável.
+- Demonstração e jornada própria separadas; proteção contra falha de armazenamento, toque repetido e gravações detectadas em outra aba.
+- PWA com atualização solicitada pelo usuário e dados preservados.
+
+**O cálculo real ainda não está ativado na prévia porque não existe uma chave Geoapify configurada.** A integração está implementada e seus contratos foram testados com respostas simuladas. Até configurar e validar uma chave, a interface informa essa limitação e permite sequência manual; não inventa coordenadas, quilômetros ou uma rota otimizada.
 
 ## Abrir no notebook
 
-Node.js 22.12+ e npm. Validado com Node 24.21.0 e Chrome instalado no Windows. No PowerShell, use `npm.cmd` para evitar a restrição de execução do `npm.ps1`:
+Node.js 22.12+ e npm; validado com Node 24 e Chrome no Windows. No PowerShell, use `npm.cmd`:
 
 ```powershell
 cd C:\Users\DELL\Documents\Codex\girovia
@@ -15,85 +40,54 @@ npm.cmd run build
 npm.cmd run preview -- --host 127.0.0.1 --port 4173 --strictPort
 ```
 
-Abra http://127.0.0.1:4173. Mantenha o terminal do servidor aberto. `npm run dev` serve para desenvolvimento; o service worker é ativado somente no build de produção. Em Linux/macOS, use `npm` no lugar de `npm.cmd`.
+Abra http://127.0.0.1:4173 e mantenha o servidor aberto. Em outros sistemas, use `npm` no lugar de `npm.cmd`. Desenvolvimento: `npm.cmd run dev`. O script prepara os arquivos do OCR a partir das dependências antes de iniciar o Vite.
 
-## Usar e instalar no celular
+## Lista da empresa
 
-O build em `dist` deve ser publicado em uma hospedagem **HTTPS**, na raiz do domínio, com fallback para `index.html`. `sw.js` precisa ser servido como JavaScript e com revalidação (`Cache-Control: no-cache`); não encaminhar pedidos de arquivos inexistentes para HTML. Assets com hash podem receber cache longo. A prévia acima foi publicada privadamente pelo recurso Sites; nenhuma hospedagem externa paga foi contratada.
+Modelo novo: `nome;endereco;pacote`. Separadores aceitos: ponto e vírgula, vírgula ou tabulação; campos entre aspas, aspas escapadas e linhas dentro de campos são interpretados. Colunas reconhecidas incluem nome/destinatario/destino, endereco/address e pacote/codigo/rastreio/tracking. Complemento, bairro, cidade, uf e cep podem estar em colunas separadas e são reunidos ao endereço.
 
-1. Abra o endereço HTTPS no celular, conectado à internet.
-2. Espere aparecer “Interface pronta para abrir sem internet”.
-3. **Android/Chrome:** use “Instalar aplicativo” ou “Adicionar à tela inicial” no menu. O botão de instalação depende da disponibilidade oferecida pelo navegador.
-4. **iPhone/Safari:** Compartilhar → Adicionar à Tela de Início → confirmar. O menu varia entre versões. Não há promessa de instalação idêntica ao Android.
-5. Abra pelo ícone, carregue a jornada e teste novamente sem conexão. Exporte backup antes de limpar dados ou trocar de aparelho.
+Endereço é obrigatório. Sem nome, usa-se a identificação do pacote; sem código, é gerada uma identificação local, que não equivale a um código de rastreio da empresa. Confira esses identificadores na prévia. Até 100 pacotes por jornada e 500 KB por lista. Nome até 80, endereço até 240 e código até 64 caracteres. O modelo antigo de cinco colunas ainda é aceito; tipo e horário são ignorados na entrada nova.
 
-O endereço `127.0.0.1` acima vale apenas para o notebook. Abrir pelo IP da rede em HTTP pode servir à inspeção visual, mas não valida PWA, localização ou funcionamento offline; essas funções exigem contexto seguro. Instalação em Android e iPhone físicos ainda precisa ser testada.
+Em “Colar lista”, uma tabela com cabeçalho é reconhecida ou cada linha vira um endereço. Arquivos Excel/PDF/imagens de uma lista ainda não são importados diretamente: exporte CSV ou cole os dados. O relatório CSV de resultados é diferente do modelo de entrada. Use backup JSON para restaurar uma jornada inteira.
 
-## O que funciona
+## Etiquetas
 
-- Cinco telas: Início, Entregas, Conferência, Jornada e Resumo; navegação inferior e áreas seguras no celular.
-- Cadastro e edição de destino, endereço, pacote, tipo, prioridade e recebimento. Validação mantém os campos quando ocorre erro.
-- Ordem manual das paradas e botão explícito para priorizar. Não há otimização automática.
-- Importação CSV com prévia, erros por linha e possíveis duplicatas; duplicatas são ignoradas por padrão e podem ser incluídas explicitamente.
-- Alertas de recebimento encerrado ou próximo do fim (até 60 minutos), pelo relógio local. Sem cálculo do tempo necessário para chegar.
-- Entregue, tentativa com motivo, seleção da próxima pendente, retentativa e correção com confirmação e histórico de alterações.
-- Proteção contra registros repetidos e pausa de 700 ms antes de registrar a próxima parada.
-- Persistência antes de avançar: se o armazenamento falhar, o resultado é revertido e a parada não muda.
-- Histórico de jornadas arquivadas, resultados CSV, backup JSON e restauração validada com confirmação.
-- Demonstração e jornada própria separadas. Reiniciar demonstração não apaga a jornada própria.
-- Interface e registros previamente carregados acessíveis sem internet. Atualização do PWA espera escolha do usuário e não troca a versão enquanto ele preenche um formulário.
-- Localização solicitada por botão, com tratamento de permissão negada, indisponibilidade, timeout e baixa precisão. Sem acompanhamento em segundo plano.
+Use “Não tenho lista” → fotografar/escolher etiqueta → conferir destinatário, rua, número, complemento, cidade e pacote → confirmar e ler a próxima. A foto não é enviada a serviços de OCR, não entra no backup e é descartada ao concluir/cancelar a leitura. O texto completo é mostrado para conferência, mas só os campos confirmados são persistidos.
 
-## Experimentar
+A leitura usa o texto impresso; não depende de o código de barras conter o endereço. Decodificação de todos os formatos de código de barras/QR não foi implementada. Um código identificado no texto não consulta sistemas de transportadoras. Remetente e destinatário podem ser confundidos pelo OCR; confira sempre antes de salvar. Não há promessa de leitura universal de etiquetas.
 
-1. Leia a orientação inicial e feche em “Entendi, começar”.
-2. Em Entregas, teste cadastro, edição, prioridade, setas de ordenação e o modelo CSV.
-3. Em Conferência, ajuste e salve horários; depois inicie a jornada.
-4. Registre uma entrega e uma falha com motivo. Recarregue para confirmar a parada atual.
-5. No resumo, corrija um resultado ou selecione “Tentar novamente”. Falhas não retornam sozinhas à fila e não contam como entregas.
-6. Exporte resultados e backup. Arquive a jornada para começar outra, preservando o histórico local.
-7. Use “Usar minha jornada” para uma lista própria vazia; os exemplos continuam separados.
+Os arquivos de OCR são hospedados na própria origem, sem CDN em tempo de execução. O primeiro uso online baixa apenas os arquivos necessários. Depois de carregados, podem ser reutilizados offline (validado em teste de produção); isso depende de o navegador manter o cache. Não se pré-carregam todos os motores de OCR na instalação. Câmera física e etiquetas reais de empresas ainda precisam de validação em Android/iPhone.
 
-## CSV
+## Ativar endereços e rotas reais
 
-Modelo: `nome;endereco;tipo;horario;pacote`. Tipos: `Comércio` ou `Residência`; recebimento no mesmo dia, como `09:00–18:00` ou `09:00-18:00` (início antes do fim). Até 100 paradas por jornada e arquivo de até 500 KB. Nome até 80 caracteres, endereço até 160, pacote até 20. O importador simples não aceita delimitadores ou quebras de linha dentro dos campos.
+1. O proprietário deve criar seu próprio projeto no provedor, revisar plano, condições e cotas, sem contratar opção paga sem decisão explícita.
+2. Obter uma chave **pública para navegador**, autorizada para Geocoding, Route Planner e Routing. Restringir a origem no painel ao domínio da prévia. Nunca colocar chave secreta/admin em `VITE_`.
+3. Criar `.env.local` com `VITE_GEOAPIFY_API_KEY=sua_chave_publica`, conforme `.env.example`, e reconstruir/publicar. A chave não entra no backup; chaves `VITE_` são visíveis no bundle.
+4. Conferir os candidatos dos endereços e o ponto de saída, depois solicitar a organização. Cada busca/cálculo informa o envio ao provedor e consome a cota da conta.
 
-Possível duplicata = mesmo identificador de pacote, ou mesmo nome e endereço, ignorando acentos, caixa e espaços repetidos. Isso é uma indicação, não uma confirmação de erro. Erros bloqueiam a importação inteira; revise o arquivo e tente novamente. Exportação de resultados usa campos entre aspas e neutraliza início de fórmulas para planilhas; ela é um relatório, diferente do modelo de importação. Backup JSON é a opção para restaurar jornadas completas.
+Documentação primária: [busca de endereço](https://apidocs.geoapify.com/docs/geocoding/forward-geocoding/), [planejamento](https://apidocs.geoapify.com/docs/route-planner/) e [roteamento](https://apidocs.geoapify.com/docs/routing/). Sem promessa de preço ou cota fixa: confirme o plano vigente antes de ativar.
 
-## Mapa, localização e limites
+O planejador recebe apenas coordenadas e IDs internos dos grupos, não nomes ou códigos dos pacotes. Buscas de endereço enviam o endereço informado. Só candidatos escolhidos pelo motorista são usados. O ponto pode corresponder a rua/bairro; confira número e cidade. O modo atual é carro (`drive`), sem trânsito em tempo real, garantia de melhor rota global, instruções curva a curva ou restrições específicas de moto/caminhão.
 
-O mapa de ruas só carrega após escolha explícita; usa `tile.openstreetmap.org` com referência à origem real e atribuição visível. O provedor recebe IP, origem e área visualizada. Nomes, endereços e resultados não são enviados. Ao exibir a localização obtida pelo botão, a área visualizada pode revelar sua posição ao provedor.
+Uma resposta que omita paradas é recusada sem alterar a lista. Resultados já registrados são preservados na reorganização das pendentes. O traçado desenhado vem exclusivamente da API de Routing; a geometria do planejador não é tratada como trajeto de ruas. Se o traçado falhar, a sequência pode ser preservada com aviso. Alterar endereço, excluir/adicionar pacote, reordenar ou pedir retentativa invalida o plano anterior.
 
-Em 20/10/2026, uma verificação real no Chrome deste notebook recebeu HTTP 200 em imagens do mapa (zoom 14). Dentro do sandbox, a rede foi negada; a verificação externa autorizada carregou imagens. Isso não comprova disponibilidade no Codespaces, em celulares ou em produção. Testes automatizados de 403, origem e carregamento usam respostas simuladas.
+Não foram integrados Nominatim público ou o demo OSRM: as políticas e o perfil de um app comercial de entregas exigem outra solução. Não há contratação de serviço, conta criada, chave de demonstração embutida ou contorno de bloqueios.
 
-Ao ocorrer erro, a camada é removida e não há novas tentativas automáticas durante a sessão. Recarregar pode iniciar uma nova tentativa. Registros continuam disponíveis sem mapa. Não há alternância de domínios, falsificação de Referer ou contorno de bloqueio.
+## Mapas e privacidade
 
-O serviço público é uma opção para validação pequena conforme sua [política oficial](https://operations.osmfoundation.org/policies/tiles/), sem garantia de disponibilidade e sujeito a bloqueio. O navegador respeita seu cache HTTP normal. O service worker não armazena imagens externas, não faz download antecipado e não oferece mapas offline. Antes de uso comercial em escala, definir volume, contato público e provedor autorizado; calcular regras/cotas/custos e avaliar serviço contratado ou hospedagem própria. Nenhuma chave ou cartão foi cadastrado.
+Mapa de ruas OpenStreetMap é opcional, com atribuição e origem verdadeira. Carregar o mapa envia IP/origem/área visualizada; localização do motorista só é solicitada por botão e não é salva. Erro de imagens remove a camada e interrompe novas consultas na sessão. Imagens de mapa não são armazenadas pelo service worker. [Política do provedor](https://operations.osmfoundation.org/policies/tiles/).
 
-| Recurso | Situação |
-| --- | --- |
-| Mapa de ruas | online, após escolha, sujeito ao provedor |
-| Posição do motorista | obtida por botão; precisão informada; não salva |
-| Endereço convertido em coordenadas | não implementado |
-| Trajeto dirigível | não implementado; nenhuma linha reta é apresentada como trajeto |
-| Otimização de sequência | não implementada; ordem manual |
-| Navegação curva a curva | não implementada |
+Jornadas ficam em `localStorage`, na chave anterior `girovia-pilot-v2`, preservada mesmo após a troca de nome. A migração de `girovia-demo-v1` continua disponível e mantém a chave original. Dados antigos e backups compatíveis não são apagados por retirar os horários.
 
-Os cinco pontos de demonstração são fictícios, sem correspondência validada com os endereços. Jornadas próprias não herdam esses pontos. Novos endereços ficam com **localização não confirmada**. Clima e trânsito fictícios foram retirados da interface.
+Sem conta de motorista, nuvem ou sincronização. Cada origem/navegador tem seus dados. Exporte backup JSON antes de trocar de aparelho ou limpar o site; ele contém endereços sem criptografia e deve ser guardado com cuidado. Ajuda oferece exportação, restauração, recuperação de dados originais e exclusões confirmadas. Não há declaração de conformidade completa com LGPD ou liberação comercial ampla.
 
-## Dados e privacidade
+## Instalar no celular
 
-- Jornadas, seleção, página, resultados, alterações e histórico ficam no `localStorage`, chave `girovia-pilot-v2`, na origem deste navegador. Não há conta, backend ou sincronização em nuvem.
-- Migração da chave anterior `girovia-demo-v1` para demonstração, mantendo a chave original intacta. A chave original pode continuar contendo registros antigos; para removê-la, depois de exportar uma cópia, use a limpeza de dados do site do navegador. Isso também apaga os dados atuais e o acesso offline.
-- Dados ilegíveis não são sobrescritos automaticamente: em Ajuda, exporte os dados originais e restaure um backup válido, após confirmação. O arquivo de “dados originais” é para diagnóstico, não substitui o backup JSON restaurável.
-- Ajuda oferece exportação, restauração, reinício da demonstração e exclusão confirmada de toda a jornada própria e seu histórico. Não é possível recuperar uma exclusão sem backup.
-- Backup não tem criptografia e pode conter endereços. Guarde-o em local seguro. O app não envia esse arquivo automaticamente.
-- Localização não é persistida; pontos do motorista desaparecem ao sair da tela. Não há coleta contínua, analytics ou envio de endereços para geocodificação.
-- Alterações detectadas em outra aba bloqueiam novas gravações nesta aba até recarregar. Use uma aba por vez; não há colaboração simultânea.
-- Cache do service worker contém apenas arquivos essenciais da interface. Versões anteriores podem ser mantidas para abas ainda abertas; uma ativação futura sem clientes antigos pode limpá-las. Ele nunca apaga o `localStorage`.
-- Use dados fictícios nos primeiros testes. Este piloto não equivale a conformidade completa com a LGPD ou liberação para operação comercial ampla.
+Abra o link HTTPS online e espere a indicação de interface pronta para offline. Android/Chrome: menu → Instalar aplicativo ou Adicionar à tela inicial. iPhone/Safari: Compartilhar → Adicionar à Tela de Início. A prévia é privada e pode pedir a conta proprietária. A experiência standalone em aparelhos físicos ainda não foi verificada.
 
-## Testes
+O build estático fica em `dist`, na raiz do domínio. `sw.js` precisa ser revalidado; assets com hash podem ter cache longo. Preserve a identidade e o acesso do Site descritos em [PUBLICACAO.md](docs/PUBLICACAO.md).
+
+## Verificar
 
 ```powershell
 npm.cmd test
@@ -101,8 +95,6 @@ npm.cmd run build
 npm.cmd run test:pwa
 ```
 
-Windows: usa Chrome instalado. Em Linux/macOS, instale Chromium do Playwright (`npx playwright install chromium`) ou informe `CHROMIUM_PATH` para um executável existente. Os testes PWA dependem do build atualizado e usam a porta 4173; os testes de fluxo usam 5173. Em ambientes restritos, o Chrome e o encerramento dos servidores podem exigir permissão do ambiente. Não ignore falhas para obter resultados positivos.
+Chrome no Windows: desktop e emulação touch 360/390/430 px. OCR usa uma imagem de etiqueta fictícia de teste e o motor real local; testes do provedor usam uma chave fictícia somente no processo Vite de testes e respostas controladas, nunca em produção. A leitura offline e a atualização usam service worker real.
 
-Validação de referência: Chrome desktop no Windows e emulação touch de 360×844, 390×844 e 430×844; desktop 1440×1060. Fluxos cobrem cadastro/edição, validação, CSV/duplicatas/escape de HTML, resultados mistos, seleção e persistência, retentativa/correção, toque repetido, falha de armazenamento, sequência/prioridade, exclusão confirmada, separação de modos, arquivo/exportação, backup/restauração, migração/dados corrompidos, mapa 403, política de referência, localização negada/baixa precisão e larguras sem rolagem horizontal. Testes de produção exercitam service worker real, recarregamento offline, registro offline e atualização aguardando o usuário com jornada preservada.
-
-**Não foram testados aparelhos físicos, Safari/iOS ou instalação manual em celular.** A publicação privada foi confirmada pelo Sites; os testes de comportamento ocorreram localmente. Consulte [a validação](docs/VALIDACAO.md), [o plano comercial](docs/COMERCIALIZACAO.md) e [a implementação](docs/IMPLEMENTACAO.md).
+Não houve teste de câmera física, Safari/iOS ou chamada autenticada real ao Geoapify. Consulte [VALIDACAO.md](docs/VALIDACAO.md), [COMERCIALIZACAO.md](docs/COMERCIALIZACAO.md) e [IMPLEMENTACAO.md](docs/IMPLEMENTACAO.md).

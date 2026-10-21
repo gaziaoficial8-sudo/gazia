@@ -1,5 +1,7 @@
 # Plano inicial e evolução do piloto
 
+> v0.3: nome provisório Entreguei; duas entradas principais — lista da empresa ou etiquetas quando não houver lista. Tipo de imóvel e janelas de recebimento saíram do fluxo. A organização de ruas está integrada ao Geoapify e depende de chave; sem ela, apenas sequência manual. Esta decisão substitui os requisitos anteriores sobre horários.
+
 > Atualização v0.2: a base mobile/PWA, CSV com prévia, prioridades, sequência manual, motivos, correções, histórico e backup local foram implementados. O clima fictício foi retirado. Consulte [README](../README.md), [comercialização](COMERCIALIZACAO.md) e [validação](VALIDACAO.md) para o estado atual. As decisões abaixo registram a intenção original; geocodificação, trajetos, otimização real e nuvem continuam pendentes.
 
 ## Objetivo

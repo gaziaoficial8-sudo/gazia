@@ -1,5 +1,15 @@
 # Implementação do piloto mobile
 
+## Evolução v0.3
+
+Fluxo de entrada implementado em `intake-ui.js`/`intake-controller.js`; reconhecimento real em `labels.js`, com Tesseract.js 7 e modelo português do pacote `@tesseract.js-data/por`. `prepare-ocr.mjs` gera os assets locais para dev/build. A biblioteca e o core usam licença Apache-2.0; o pacote do modelo declara MIT. Licenças do motor são distribuídas junto aos assets.
+
+Horários/tipo deixam de ser obrigatórios, sem trocar a chave de armazenamento ou apagar dados antigos. Leitura de foto, revisão, contador, duplicatas, listas coladas/CSV com aspas e agrupamento por endereço foram integrados ao núcleo anterior. Resultados de cada pacote continuam separados, mesmo quando registrados em grupo.
+
+`routing.js` implementa busca de candidatos, plano das pendentes e traçado de ruas via Geoapify, com timeout, tratamento de cota/erro, confirmação explícita e rejeição de planos incompletos. A configuração usa somente chave pública restrita por origem (`VITE_GEOAPIFY_API_KEY`), ausente na prévia. Nenhuma chamada real autenticada pôde ser validada. Não há troca por domínios de demonstração nem geocodificação pública indiscriminada.
+
+PWA mantém a identidade/storage anteriores. OCR é cacheado sob demanda na própria origem; fotos, mapas e respostas externas não entram no cache. Foram preservados dados, backups, motivos, retentativa, correções, avanço e atualização sob escolha.
+
 Base: clone limpo de `gaziaoficial8-sudo/gazia`, branch main, em 20/10/2026. Nenhum AGENTS.md no repositório ou nos diretórios pais consultados. Preservar JavaScript, Vite, Leaflet, npm e lockfile.
 
 1. Executar build e testes existentes, adaptando somente a escolha do navegador ao Windows.

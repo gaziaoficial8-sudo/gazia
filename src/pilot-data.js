@@ -7,7 +7,7 @@ export function emptyJourney() {
  return {id:crypto.randomUUID(),createdAt:new Date().toISOString(),deliveries:[],selected:null,planned:false,page:'home',events:[]};
 }
 export function validateData(v) {
- const goodJourney=j=>j&&typeof j.id==='string'&&Array.isArray(j.events)&&Array.isArray(j.deliveries)&&j.deliveries.length<=100&&new Set(j.deliveries.map(d=>String(d.id))).size===j.deliveries.length&&j.deliveries.every(d=>(typeof d.id==='string'||Number.isSafeInteger(d.id))&&['name','address','package','window','type'].every(k=>typeof d[k]==='string')&&d.name.trim()&&d.name.length<=80&&d.address.trim()&&d.address.length<=160&&d.package.trim()&&d.package.length<=20&&validWindow(d.window)&&['pending','done','failed'].includes(d.status)&&['Residência','Comércio'].includes(d.type)&&(!d.priority||['normal','high'].includes(d.priority)));
+ const goodJourney=j=>j&&typeof j.id==='string'&&Array.isArray(j.events)&&Array.isArray(j.deliveries)&&j.deliveries.length<=100&&new Set(j.deliveries.map(d=>String(d.id))).size===j.deliveries.length&&j.deliveries.every(d=>(typeof d.id==='string'||Number.isSafeInteger(d.id))&&['name','address','package'].every(k=>typeof d[k]==='string')&&d.name.trim()&&d.name.length<=80&&d.address.trim()&&d.address.length<=240&&d.package.trim()&&d.package.length<=64&&['pending','done','failed'].includes(d.status)&&(!d.priority||['normal','high'].includes(d.priority))&&(!d.point||(Array.isArray(d.point)&&d.point.length===2&&d.point.every(Number.isFinite)&&Math.abs(d.point[0])<=180&&Math.abs(d.point[1])<=90)));
  if(v.version!==2||!Number.isSafeInteger(v.revision)||v.revision<0||!['demo','work'].includes(v.mode)||!goodJourney(v.demo)||!goodJourney(v.work)||!Array.isArray(v.history)||v.history.some(h=>!goodJourney(h)||!['demo','work'].includes(h.mode)))throw Error('Dados inválidos.');
 }
 export function loadData(initial) {
@@ -35,18 +35,24 @@ export function windowAlert(delivery, date=new Date()) {
  const delta=h*60+m-date.getHours()*60-date.getMinutes();
  return delta<0?'Janela encerrada hoje':delta<=60?`Recebimento termina em ${delta} min`:'';
 }
-const normalized=s=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\s+/g,' ').trim();
-export function duplicateOf(row,other){return normalized(row.package)===normalized(other.package)||(normalized(row.name)===normalized(other.name)&&normalized(row.address)===normalized(other.address));}
+export const normalized=s=>String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\s+/g,' ').trim();
+export function duplicateOf(row,other){return normalized(row.package)===normalized(other.package);}
+export function groupStops(deliveries){const groups=new Map();for(const d of deliveries){const key=normalized(d.address);if(!groups.has(key))groups.set(key,{id:String(d.id),address:d.address,deliveries:[]});groups.get(key).deliveries.push(d);}return [...groups.values()].map(g=>({...g,point:g.deliveries.every(d=>d.point&&JSON.stringify(d.point)===JSON.stringify(g.deliveries[0].point))?g.deliveries[0].point:null}));}
+function csvRows(text,separator){const rows=[];let row=[],cell='',quoted=false;for(let i=0;i<text.length;i++){const c=text[i];if(c==='"'){if(quoted&&text[i+1]==='"'){cell+='"';i++;}else quoted=!quoted;}else if(c===separator&&!quoted){row.push(cell.trim());cell='';}else if((c==='\n'||c==='\r')&&!quoted){if(c==='\r'&&text[i+1]==='\n')i++;row.push(cell.trim());if(row.some(Boolean))rows.push(row);row=[];cell='';}else cell+=c;}if(quoted)throw Error('Aspas sem fechamento na lista.');row.push(cell.trim());if(row.some(Boolean))rows.push(row);return rows;}
 export function parseCSV(raw,existing=[]) {
  if(raw.length>500000)throw Error('Arquivo muito grande. Use até 100 entregas e 500 KB.');
- const lines=raw.replace(/^\uFEFF/,'').trim().split(/\r?\n/);
- if(lines[0]?.trim()!=='nome;endereco;tipo;horario;pacote')throw Error('Use o modelo CSV: nome;endereco;tipo;horario;pacote.');
+ raw=raw.replace(/^\uFEFF/,'').trim();
+ const first=raw.split(/\r?\n/)[0]||'',separator=first.includes('\t')?'\t':first.includes(';')?';':',';
+ const lines=csvRows(raw,separator),headers=(lines.shift()||[]).map(normalized);
+ const index=names=>headers.findIndex(h=>names.includes(h));
+ const addressIndex=index(['endereco','endereço','address']),nameIndex=index(['nome','destinatario','destino','name']),packageIndex=index(['pacote','codigo','rastreio','tracking','package']);
+ if(addressIndex<0)throw Error('Use o modelo CSV com as colunas nome;endereco;pacote. Você também pode colar uma lista de endereços.');
  const rows=[],errors=[];
- lines.slice(1).forEach((line,i)=>{
-  if(!line.trim())return;
-  const r=line.split(';').map(v=>v.trim());
-  if(r.length!==5||r.some(v=>!v)||r[0]?.length>80||r[1]?.length>160||r[4]?.length>20||!['Comércio','Residência'].includes(r[2])||!validWindow(r[3])){errors.push(`Linha ${i+2}: confira campos, limites, tipo e horários.`);return;}
-  const row={id:crypto.randomUUID(),name:r[0],address:r[1],type:r[2],window:r[3],package:r[4],status:'pending',priority:'normal'};
+ lines.forEach((r,i)=>{
+  const extras=['complemento','bairro','cidade','uf','cep'].map(k=>{const n=index([k]);return n<0?'':r[n];}).filter(Boolean);
+  const address=[r[addressIndex],...extras].filter(Boolean).join(', '),pkg=r[packageIndex]||`P${String(existing.length+i+1).padStart(3,'0')}`,name=r[nameIndex]||pkg;
+  if(r.length!==headers.length||!address||name.length>80||address.length>240||pkg.length>64){errors.push(`Linha ${i+2}: confira endereço, colunas e tamanho dos campos.`);return;}
+  const row={id:crypto.randomUUID(),name,address,package:pkg,status:'pending',priority:'normal',source:'list'};
   const duplicate=[...existing,...rows].some(other=>duplicateOf(row,other));
   rows.push({...row,duplicate,line:i+2});
  });
@@ -54,8 +60,14 @@ export function parseCSV(raw,existing=[]) {
  if(rows.length>100)errors.push('O limite é de 100 entregas por jornada.');
  return {rows,errors};
 }
+export function parsePastedList(raw,existing=[]){
+ if(raw.length>500000)throw Error('Lista muito grande.');
+ if(/^(?:[^\n]*[;\t,])?[^\n]*(?:endereco|endereço|address)/i.test(raw.split(/\r?\n/)[0]||''))return parseCSV(raw,existing);
+ const lines=raw.trim().split(/\r?\n/).filter(l=>l.trim());
+ return parseCSV('endereco\n'+lines.map(l=>'"'+l.trim().replaceAll('"','""')+'"').join('\n'),existing);
+}
 // Formula-like cells are neutralized for spreadsheet programs; all fields are quoted.
 export function reportCSV(deliveries) {
  const cell=v=>'"'+String(v??'').replace(/^[=+@\-\t\r]/,"'$&").replaceAll('"','""')+'"';
- return '\uFEFF'+[['destino','endereco','pacote','recebimento','resultado','motivo','registrado_em'],...deliveries.map(d=>[d.name,d.address,d.package,d.window,{done:'Entregue',failed:'Sem sucesso',pending:'Pendente'}[d.status],d.reason,d.completedAt])].map(row=>row.map(cell).join(';')).join('\r\n');
+ return '\uFEFF'+[['destino','endereco','pacote','resultado','motivo','registrado_em'],...deliveries.map(d=>[d.name,d.address,d.package,{done:'Entregue',failed:'Sem sucesso',pending:'Pendente'}[d.status],d.reason,d.completedAt])].map(row=>row.map(cell).join(';')).join('\r\n');
 }

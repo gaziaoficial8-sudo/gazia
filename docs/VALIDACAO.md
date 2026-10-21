@@ -1,5 +1,19 @@
 # Validação do piloto · 20/10/2026
 
+## Entreguei v0.3
+
+A suíte de fluxo tem 14 cenários em quatro configurações (56 execuções), incluindo as duas entradas, CSV/colar, cadastro sem tipo/horário, OCR **real** com uma imagem fictícia, revisão antes de gravar, pacote duplicado, agrupamento, entrega em grupo e integração do provedor com respostas controladas. O teste OCR verifica ausência de requisições externas e ausência de foto no armazenamento.
+
+A primeira rodada teve 52 aprovados e quatro falhas em uma expectativa antiga que tratava CSV com vírgulas como inválido. O teste foi atualizado para um arquivo realmente sem coluna de endereço, preservando a validação. A reexecução dos 12 casos de CSV/lista/provedor passou, assim como duas verificações visuais em 390 px.
+
+Rodada final completa: **56 aprovados em 47,5 s**. Build final aprovado; a chave fictícia do teste não aparece no bundle publicado.
+
+Os três casos PWA passaram (10,6 s), incluindo recarregamento/registro offline, atualização com dados preservados e uma **nova leitura OCR sem internet** após carregamento inicial online do leitor. Nenhum serviço de OCR foi simulado; o motor e o modelo são os assets locais reais.
+
+Geoapify foi validado apenas com contratos simulados (busca, confirmação, agrupamento, retorno à saída, ordem de jobs e traçado separado). A chave fictícia existe somente no processo de teste e não foi incluída no build publicado. A chave real está ausente: não declarar endereços/rotas reais como liberados ou verificados. Sem testes físicos de câmera, Android/iPhone ou etiquetas reais de empresas.
+
+As seções abaixo mantêm o registro da v0.2 para referência histórica.
+
 ## Ambiente
 
 Windows, Node 24.21.0, npm com lockfile existente e Chrome instalado. Testes de fluxo em desktop 1440×1060 e emulação touch 360×844, 390×844 e 430×844. Emulação não equivale a teste em Android ou iPhone físico.

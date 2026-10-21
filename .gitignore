@@ -4,3 +4,6 @@ playwright-report/
 test-results/
 test-results-pwa/
 *.log
+public/ocr/
+.env.local
+.env.*.local
